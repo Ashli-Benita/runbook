@@ -6,8 +6,8 @@ import ExecutionMonitor from './components/ExecutionMonitor';
 import ApprovalModal from './components/ApprovalModal';
 import ExecutionReportView from './components/ExecutionReportView';
 import AuditLogView from './components/AuditLogView';
+import AuthModal from './components/AuthModal';
 import { api } from './services/api';
-import { Play, ArrowRight, Activity, ShieldAlert } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -17,6 +17,13 @@ export default function App() {
   const [executionSteps, setExecutionSteps] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [report, setReport] = useState(null);
+
+  // User Auth State
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user_info');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -57,7 +64,7 @@ export default function App() {
       setActiveTab('executions');
       loadData();
     } catch (err) {
-      alert("Error starting runbook execution: " + err.message);
+      alert("Error starting runbook execution: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -67,8 +74,14 @@ export default function App() {
       setReport(rpt);
       setActiveTab('report');
     } catch (err) {
-      alert("Error generating report: " + err.message);
+      alert("Error generating report: " + (err.response?.data?.message || err.message));
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_info');
+    setUser(null);
   };
 
   const successCount = executions.filter(e => e.status === 'COMPLETED').length;
@@ -82,6 +95,9 @@ export default function App() {
           setActiveTab(tab);
         }}
         pendingCount={pendingApprovals.length}
+        user={user}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       <main className="main-content">
@@ -172,6 +188,13 @@ export default function App() {
           onResumed={loadData}
         />
       )}
+
+      {/* User Login / Register Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={(userData) => setUser(userData)}
+      />
     </div>
   );
 }
