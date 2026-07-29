@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const api = {
   // Runbook endpoints
@@ -19,9 +19,7 @@ export const api = {
   uploadRunbook: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await axios.post(`${API_BASE}/runbooks/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const res = await axios.post(`${API_BASE}/runbooks/upload`, formData);
     return res.data;
   },
 
